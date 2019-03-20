@@ -12,11 +12,12 @@ from fileRead import file_read
 n_step = 50
 
 file_path = sys.argv[1]
-benchmark = file_path.split('_')[0]
+file_path2 = sys.argv[2]
+benchmark = file_path.split('_')[1]
 
 
 # --------------------read data--------------------
-seqTest, targetsTest = file_read(n_steps, file_path)
+seqTest, targetsTest = file_read(n_step, file_path, hasLabel=False, label=1)
 # affected for inputerror
 affected_raw = np.loadtxt(file_path3, dtype='int64').reshape(-1, n_steps, seqTest.shape[2])
 affected = np.zeros((affected_raw.shape[0], n_steps - 1, seqTest.shape[2]), dtype='int64')
@@ -25,10 +26,10 @@ for i in range(affected.shape[0]):
 
 
 # --------------------load model--------------------
-lstm_model = model_from_json(open('lstm_model_%s.json' % benchmark).read())
-lstm_model.load_weights("lstm_weights_%s.hdf5" % benchmark)
-hidden_states_model = model_from_json(open('hidden_states_model_%s.json' % benchmark).read())
-hidden_states_model.load_weights("lstm_weights_%s.hdf5" % benchmark, by_name=True)
+lstm_model = model_from_json(open('models/lstm_model_%s.json' % benchmark).read())
+lstm_model.load_weights("weights/lstm_weights_%s.hdf5" % benchmark)
+hidden_states_model = model_from_json(open('models/hidden_states_model_%s.json' % benchmark).read())
+hidden_states_model.load_weights("weights/lstm_weights_%s.hdf5" % benchmark, by_name=True)
 
 
 # --------------------evaluate--------------------
@@ -37,7 +38,7 @@ A = 0
 B = 0
 C = 0
 D = 0
-file_J = h5py.File('hidden_states_J_free.hdf5', 'w')
+file_J = h5py.File('h_states/hidden_states_J_free.hdf5', 'w')
 file_J.create_group('input')
 file_J.create_group('affected')
 file_J.create_group('hidden_states')

@@ -15,15 +15,16 @@ benchmark = file_path.split('_')[0]
 
 
 # --------------------read data--------------------
-seqTest, targetsTest = file_read(n_steps, file_path)
+seqTest, targetsTest = file_read(n_step, file_path)
 
 
 # --------------------load model--------------------
-lstm_model = model_from_json(open('lstm_model_%s.json' % benchmark).read())
-lstm_model.load_weights("lstm_weights_%s.hdf5" % benchmark)
+lstm_model = model_from_json(open('models/lstm_model_%s.json' % benchmark).read())
+lstm_model.load_weights("weights/lstm_weights_%s.hdf5" % benchmark)
 
 
 # --------------------evaluate--------------------
+print 'evaluating...'
 seq_num = xrange(len(seqTest))
 A = 0
 B = 0

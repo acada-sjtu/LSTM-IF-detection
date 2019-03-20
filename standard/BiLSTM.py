@@ -2,17 +2,18 @@ import sys
 import numpy as np
 from sklearn.model_selection import train_test_split
 from keras.models import Sequential, Model, model_from_json
-from keras.layers import Input, Bidirectional, LSTM, Dropout, Dense
+from keras.layers import Input, LSTM, Dropout, Dense
+from keras.layers import Bidirectional, concatenate
 from keras.callbacks import ModelCheckpoint
 from fileRead import file_read
 
 # np.random.seed(0)
 
 n_step = 50
-n_epoch = 50
-n_hidden = 16
+n_epoch = 100
+n_hidden = 32
 
-lstm_dropout_flag = 0
+dropout_flag = 0
 
 
 # --------------------read data--------------------
@@ -37,23 +38,34 @@ else:
 
 
 # --------------------construct model--------------------
-bilstm_model = Sequential()
-bilstm_model.add(Bidirectional(LSTM(n_hidden, return_sequences=False, activation='tanh'), input_shape=(n_steps-1, n_out)))
-#model.add(Dropout(0.2))
-bilstm_model.add(Dense(1,activation='sigmoid'))
+# bilstm_model = Sequential()
+input_1 = Input(shape=(n_step-1, n_out), name='input_1')
+h_states_1, state_h_1, state_c_1, state_h_2, state_c_2 = Bidirectional(LSTM(n_hidden, activation='tanh', return_sequences=True, return_state=True))(input_1)
+state_h = concatenate([state_h_1, state_h_2])
+if dropout_flag:
+	dropout_1 = Dropout(0.2)(state_h)
+	dense_1 = Dense(1, activation='sigmoid', name='output_1')(dropout_1)
+else:
+	dense_1 = Dense(1, activation='sigmoid', name='output_1')(state_h)
+# BiLSTM
+bilstm_model = Model(inputs=[input_1], outputs=[dense_1])
 bilstm_model.compile(loss='binary_crossentropy',
-              optimizer='adam',
-              metrics=['accuracy'])
+					 optimizer='adam',
+					 metrics=['accuracy'])
+# hidden states
+bi_hidden_states_model = Model(inputs=[input_1], outputs=[h_states_1])
 
-   
+
 # --------------------save model--------------------
-lstm_string = lstm_model.to_json()
-open('lstm_model_%s.json'%benchmark, 'w').write(lstm_string)
+bilstm_string = bilstm_model.to_json()
+open('models/bilstm_model_%s.json'%benchmark, 'w').write(bilstm_string)
+bi_hidden_states_string = hidden_states_model.to_json()
+open('models/bi_hidden_states_model_%s.json'%benchmark, 'w').write(bi_hidden_states_string)
 
 
 # --------------------training--------------------
-checkpointer = ModelCheckpoint(filepath="bilstm_weights_%s.hdf5" % benchmark, verbose=1, save_best_only=True)
-bilstm_model.fit(seq, targets, nb_epoch=epochs, shuffle=True, batch_size=32, validation_data=(seqTest, targetsTest), callbacks=[checkpointer])
+checkpointer = ModelCheckpoint(filepath="weights/bilstm_weights_%s.hdf5" % benchmark, verbose=1, save_best_only=True)
+bilstm_model.fit({'input_1': seq}, {'output_1': targets}, epochs=n_epoch, shuffle=True, batch_size=32, validation_data=(seqTest, targetsTest), callbacks=[checkpointer])
 print bilstm_model.evaluate(seqTest, targetsTest, batch_size=32)
 
 
@@ -65,7 +77,8 @@ C = 0
 D = 0
 print seqTest.shape
 for test_num in seq_num:
-	guess = bilstm_model.predict_classes(np.asarray([seqTest[test_num]]))
+	prob = bilstm_model.predict(np.asarray([seqTest[test_num]]))
+	guess = 1 if prob>=0.5 else 0
 	if guess == 1:
 		if targetsTest[test_num] == 1:
 			D += 1
