@@ -1,17 +1,22 @@
 import numpy as np
 def file_read(n_steps, file_path, file_path2='', hasLabel=True, label=0):
-    """ Test RNN with binary outputs. """
-    
-    count = 0
-    data_input = []
+    # if hasLabel=False, give label manually
+    # 1 for faulty
+    # 0 for fault-free
+    # --------------------file 1--------------------
     seq = []
     targets= []
     seqTest = []
     targetsTest = []
+    data_input = []
+    count = 0
     for l in open(file_path):
         if count == 0:
+            if hasLabel:
+                targets.append(int(l))
+            else:
+                targets.append(label)
             count += 1
-            targets.append(int(l))
             continue
         row = [int(x) for x in l.replace('\n','').split()]
         data_input.append(row)
@@ -23,16 +28,19 @@ def file_read(n_steps, file_path, file_path2='', hasLabel=True, label=0):
     
     seq = np.asarray(seq)
     targets = np.asarray(targets)
-	
+
     if (file_path2==''):
         return (seq, targets)
 
-#----------------test-------------------
+
+    # --------------------file 2--------------------
     count = 0
     for l in open(file_path2):
         if count == 0:
             if hasLabel:
                 targetsTest.append(int(l))
+            else:
+                targetsTest.append(label)
             count += 1
             continue
         row = [int(x) for x in l.replace('\n','').split()]
@@ -41,11 +49,6 @@ def file_read(n_steps, file_path, file_path2='', hasLabel=True, label=0):
         if (count == n_steps):
             count = 0
             seqTest.append(data_input[:])
-            if not hasLabel:
-                # here to give label manually
-                # 1 for faulty
-                # 0 for fault-free
-                targetsTest.append(label)
             data_input = []
 
     seqTest = np.asarray(seqTest)
