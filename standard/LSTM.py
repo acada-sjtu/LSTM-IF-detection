@@ -9,7 +9,7 @@ from fileRead import file_read
 # np.random.seed(0)
 
 n_step = 50
-n_epoch = 100
+n_epoch = 150
 n_hidden = 32
 
 dropout_flag = 0

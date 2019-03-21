@@ -13,17 +13,24 @@ from fileRead import file_read
 n_step = 50
 
 file_path = sys.argv[1]
-file_path2 = sys.argv[2]
 benchmark = file_path.split('_')[1]
+pos = file_path.split('_')[2]
+
+if file_path.split('_')[0]=='inputdata':
+	faulty_label = 0
+else:
+	faulty_label = 1
 
 
 # --------------------read data--------------------
-seqTest, targetsTest = file_read(n_step, file_path, hasLabel=False, label=1)
-# affected for inputerror
-affected_raw = np.loadtxt(file_path3, dtype='int64').reshape(-1, n_steps, seqTest.shape[2])
-affected = np.zeros((affected_raw.shape[0], n_steps - 1, seqTest.shape[2]), dtype='int64')
-for i in range(affected.shape[0]):
-    affected[i] = np.delete(affected_raw[i], 0, axis=0)
+seqTest, targetsTest = file_read(n_step, file_path, hasLabel=False, label=faulty_label)
+if faulty_label:
+	# affected for inputerror
+	file_path2 = sys.argv[2]
+	affected_raw = np.loadtxt(file_path2, dtype='int64').reshape(-1, n_step, seqTest.shape[2])
+	affected = np.zeros((affected_raw.shape[0], n_step - 1, seqTest.shape[2]), dtype='int64')
+	for i in range(affected.shape[0]):
+		affected[i] = np.delete(affected_raw[i], 0, axis=0)
 
 
 # --------------------load model--------------------
@@ -40,15 +47,20 @@ A = 0
 B = 0
 C = 0
 D = 0
-file_J = h5py.File('h_states/bi_hidden_states_J_free.hdf5', 'w')
+if faulty_label:
+	file_J = h5py.File('h_states/bi_hidden_states_J_%s_%s.hdf5' % (benchmark, pos), 'w')
+else:
+	file_J = h5py.File('h_states/bi_hidden_states_J_%s_free.hdf5' % benchmark, 'w')
 file_J.create_group('input')
-file_J.create_group('affected')
+if faulty_label:
+	file_J.create_group('affected')
 file_J.create_group('bi_hidden_states')
 file_J.create_group('rightORwrong')
 print seqTest.shape
 for test_num in seq_num:
 	file_J['input'].create_dataset('input_%d'%test_num, data=seqTest[test_num])
-	file_J['affected'].create_dataset('affected_%d'%test_num, data=affected[test_num])
+	if faulty_label:
+		file_J['affected'].create_dataset('affected_%d'%test_num, data=affected[test_num])
 	prob = bilstm_model.predict(np.asarray([seqTest[test_num]]))
 	guess = 1 if prob>=0.5 else 0
 	bi_hidden_states = bi_hidden_states_model.predict(np.asarray([seqTest[test_num]]))

@@ -32,18 +32,18 @@ C = 0
 D = 0
 print seqTest.shape
 for test_num in seq_num:
-    prob = lstm_model.predict(np.asarray([seqTest[test_num]]))
-    guess = 1 if prob>=0.5 else 0
-    if guess == 1:
-        if targetsTest[test_num] == 1:
-            D += 1
-        else:
-            C += 1
-    else:
-        if targetsTest[test_num] == 1:
-            B += 1
-        else:
-            A += 1
+	prob = lstm_model.predict(np.asarray([seqTest[test_num]]))
+	guess = 1 if prob>=0.5 else 0
+	if guess == 1:
+		if targetsTest[test_num] == 1:
+			D += 1
+		else:
+			C += 1
+	else:
+		if targetsTest[test_num] == 1:
+			B += 1
+		else:
+			A += 1
 print '%10s%10s%10s' % (' ', 'True', 'False')
 print '%10s%10s%10s' % ('Positive', str(D), str(C))
 print '%10s%10s%10s' % ('Negative', str(A), str(B))
