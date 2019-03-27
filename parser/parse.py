@@ -2,7 +2,8 @@ import sys
 
 filename = sys.argv[1]
 print('Parsing', filename, '...')
-file = open(filename)
+file = open(filename, 'r')
+file_new = open(filename.split('.')[0] + '.bench', 'w')
 
 one_line = 0
 line_cache = ''
@@ -11,6 +12,21 @@ input_array = []
 output_array = []
 wire_array = []
 operator_set = set([])
+operation_array = []
+
+
+class Operation:
+	# init
+	def __init__(self, op):
+		self.operator = op
+		self.input_node = []
+		self.output_node = ''
+	# print
+	def show(self):
+		print('Operator:', self.operator)
+		print('Input nodes:', self.input_node)
+		print('Output node:', self.output_node)
+
 
 def parseMultiBit(line): # input/output for multi-bit
 	end = line.find(']')
@@ -29,6 +45,109 @@ def parseSingleBit(line): # input/output for single-bit
 	return io_array
 
 
+def parseNode(key_word, line):
+	global io_cand
+	global input_array
+	global output_array
+	global wire_array
+	# module
+	if (key_word == 'module'):
+		beg = line.find('(')
+		end = line.rfind(')')
+		line = line[beg+1:end]
+		io_cand = line.split(',')
+		for i in range(len(io_cand)):
+			io_cand[i] = io_cand[i].strip()
+	# input
+	elif (key_word == 'input'):
+		line = line[5:].strip()
+		if (line[0] == '['): # input [19:0] pic_ints_i;
+			input_array_tmp = parseMultiBit(line)
+			input_array = input_array + input_array_tmp
+			io_cand.remove(input_array_tmp[0].split('[')[0])
+		else:
+			input_array_tmp = parseSingleBit(line)
+			input_array = input_array + input_array_tmp
+			for input_1 in input_array_tmp:
+				io_cand.remove(input_1)
+	# output
+	elif (key_word == 'output'):
+		line = line[6:].strip()
+		if (line[0] == '['): # output [31:0] iwb_adr_o;
+			output_array_tmp = parseMultiBit(line)
+			output_array = output_array + output_array_tmp
+			io_cand.remove(output_array_tmp[0].split('[')[0])
+		else:
+			output_array_tmp = parseSingleBit(line)
+			output_array = output_array + output_array_tmp
+			for output_1 in output_array_tmp:
+				io_cand.remove(output_1)
+	# wire
+	elif (key_word == 'wire'):
+		line = line[4:].strip()
+		if (line[0] == '['):
+			wire_array_tmp = parseMultiBit(line)
+			wire_array = wire_array + wire_array_tmp
+		else:
+			wire_array_tmp = parseSingleBit(line)
+			wire_array  = wire_array + wire_array_tmp
+	else:
+		raise('Exception')
+
+
+def parseOperation(op, line):
+	operator_set.add(key_word)
+	# -----parse IO array-----
+	io_array = line[line.find('(')+1 : line.rfind(')')].split(',')
+	for i in range(len(io_array)):
+		io_tmp = io_array[i]
+		io_array[i] = io_tmp[io_tmp.find('(')+1 : io_tmp.find(')')]
+	# -----parse operator-----
+	if (op[:3] == 'AND'):
+		print(op)
+		exit()
+	elif (op[:2] == 'OR'):
+		if (op not in ['OR2x2_ASAP7_75t_SL']):
+			print(line)
+			exit()
+		operation = Operation('OR')
+		input_num = int(op[2])
+		for i in range(input_num):
+			operation.input_node.append(io_array[i])
+		operation.output_node = io_array[-1]
+		operation_array.append(operation)
+	elif (op[:3] == 'INV'):
+		if (op not in ['INVx1_ASAP7_75t_SL']):
+			print(line)
+			exit()
+		operation = Operation('NOT')
+		operation.input_node.append(io_array[0])
+		operation.output_node = io_array[-1]
+	elif (op[:6] == 'A2O1A1'):
+		print(line)
+		exit()
+	# protential ob
+	elif (op[:3] == 'DFF'):
+		if (op not in ['DFFHQNx1_ASAP7_75t_SL']):
+			print(line)
+			exit()
+		operation = Operation('DFF')
+		operation.input_node.append(io_array[0])
+		operation.output_node = io_array[-1]
+	elif (op[:9] == 'ASYNC_DFF'): # TODO: uncertain logic
+		if (op not in ['ASYNC_DFFHx1_ASAP7_75t_SL']):
+			print(line)
+			exit()
+		operation = Operation('ASYNC_DFF')
+		operation.input_node.append(io_array[0])
+		operation.output_node = io_array[-1]
+	else:
+		print(op)
+		exit()
+
+
+
+# main
 for line in file:
 	line = line.strip()
 	if (line == ''):
@@ -37,54 +156,44 @@ for line in file:
 	if (line[-1] != ';'):
 		continue
 	else:
-		operator = line_cache.split(' ')[0]
+		key_word = line_cache.split(' ')[0]
 		# ----------moduel, input, output, wire----------
-		if (operator == 'module'): # module
-			beg = line_cache.find('(')
-			end = line_cache.find(')')
-			line_cache = line_cache[beg+1:end]
-			io_cand = line_cache.split(',')
-			for i in range(len(io_cand)):
-				io_cand[i] = io_cand[i].strip()
-		elif (operator == 'input'):
-			line_cache = line_cache[5:].strip()
-			if (line_cache[0] == '['): # input [19:0] pic_ints_i;
-				input_array_tmp = parseMultiBit(line_cache)
-				input_array = input_array + input_array_tmp
-				io_cand.remove(input_array_tmp[0].split('[')[0])
-			else:
-				input_array_tmp = parseSingleBit(line_cache)
-				input_array = input_array + input_array_tmp
-				for input_1 in input_array_tmp:
-					io_cand.remove(input_1)
-		elif (operator == 'output'):
-			line_cache = line_cache[6:].strip()
-			if (line_cache[0] == '['): # output [31:0] iwb_adr_o;
-				output_array_tmp = parseMultiBit(line_cache)
-				output_array = output_array + output_array_tmp
-				io_cand.remove(output_array_tmp[0].split('[')[0])
-			else:
-				output_array_tmp = parseSingleBit(line_cache)
-				output_array = output_array + output_array_tmp
-				for output_1 in output_array_tmp:
-					io_cand.remove(output_1)
-		elif (operator == 'wire'):
-			line_cache = line_cache[4:].strip()
-			if (line_cache[0] == '['):
-				wire_array_tmp = parseMultiBit(line_cache)
-				wire_array = wire_array + wire_array_tmp
-			else:
-				wire_array_tmp = parseSingleBit(line_cache)
-				wire_array  = wire_array + wire_array_tmp
-		# ----------operators----------
-		# elif ():
+		if (key_word=='module' or key_word=='input' or key_word=='output' or key_word=='wire'):
+			parseNode(key_word, line_cache)
+		# ----------operations----------
 		else:
-			operator_set.add(operator)
+			# print(key_word)
+			parseOperation(key_word, line_cache)
 			# print(line_cache[:20])
 			# print('TODO')
 			# exit()
+		# empty line_cache
 		line_cache = ''
+# write bench
+file_new.write('input ')
+for node in input_array:
+	if (node == input_array[-1]):
+		file_new.write(node + ';')
+	else:
+		file_new.write(node + ',')
+file_new.write('\n\n')
+file_new.write('output ')
+for node in output_array:
+	if (node == output_array[-1]):
+		file_new.write(node + ';')
+	else:
+		file_new.write(node + ',')
 
+
+
+
+
+
+
+
+
+file.close()
+file_new.close()
 
 
 # calculation
