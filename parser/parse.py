@@ -14,6 +14,17 @@ wire_array = []
 operator_set = set([])
 operation_array = []
 
+# tmp nodes
+class tmpNode:
+	# class variable
+	cnt = 0
+	# init
+	def __init__(self):
+		tmpNode.cnt = tmpNode.cnt + 1
+
+	def getNode(self):
+		return 'tmp' + str(tmpNode.cnt)
+
 
 class Operation:
 	# init
@@ -96,53 +107,249 @@ def parseNode(key_word, line):
 
 
 def parseOperation(op, line):
-	operator_set.add(key_word)
-	# -----parse IO array-----
+	# ----------parse IO array----------
 	io_array = line[line.find('(')+1 : line.rfind(')')].split(',')
 	for i in range(len(io_array)):
 		io_tmp = io_array[i]
 		io_array[i] = io_tmp[io_tmp.find('(')+1 : io_tmp.find(')')]
-	# -----parse operator-----
+	# ----------parse operator----------
+	# AND -> AND
 	if (op[:3] == 'AND'):
-		print(op)
-		exit()
+		if (op not in ['AND2x2_ASAP7_75t_SL', 'AND2x2_ASAP7_75t_SRAM']):
+			print('NOT FOUND')
+			print(op)
+			print(line)
+			print(io_array)
+			exit()
+		operation = Operation('AND')
+		input_num = int(op[3])
+		operation.input_node = io_array[:input_num]
+		operation.output_node = io_array[-1]
+		operation_array.append(operation)
+	# OR -> OR
 	elif (op[:2] == 'OR'):
 		if (op not in ['OR2x2_ASAP7_75t_SL']):
+			print('NOT FOUND')
+			print(op)
 			print(line)
+			print(io_array)
 			exit()
 		operation = Operation('OR')
 		input_num = int(op[2])
-		for i in range(input_num):
-			operation.input_node.append(io_array[i])
+		operation.input_node = io_array[:input_num]
 		operation.output_node = io_array[-1]
 		operation_array.append(operation)
+	# INV -> NOT
 	elif (op[:3] == 'INV'):
 		if (op not in ['INVx1_ASAP7_75t_SL']):
+			print('NOT FOUND')
+			print(op)
 			print(line)
+			print(io_array)
 			exit()
 		operation = Operation('NOT')
-		operation.input_node.append(io_array[0])
+		operation.input_node = [io_array[0]]
 		operation.output_node = io_array[-1]
-	elif (op[:6] == 'A2O1A1'):
-		print(line)
-		exit()
-	# protential ob
-	elif (op[:3] == 'DFF'):
-		if (op not in ['DFFHQNx1_ASAP7_75t_SL']):
+		operation_array.append(operation)
+	# NAND -> NAND
+	elif (op[:4] == 'NAND'):
+		if (op not in ['NAND3xp33_ASAP7_75t_SL', 'NAND2xp33_ASAP7_75t_SL']):
+			print('NOT FOUND')
+			print(op)
 			print(line)
+			print(io_array)
+			exit()
+		operation = Operation('NAND')
+		input_num = int(op[4])
+		operation.input_node = io_array[:input_num]
+		operation.output_node = io_array[-1]
+		operation_array.append(operation)
+	# NOR -> NOR
+	elif (op[:3] == 'NOR'):
+		if (op not in ['NOR2xp33_ASAP7_75t_SL']):
+			print('NOT FOUND')
+			print(op)
+			print(line)
+			print(io_array)
+			exit()
+		operation = Operation('NOR')
+		input_num = int(op[3])
+		operation.input_node = io_array[:input_num]
+		operation.output_node = io_array[-1]
+		operation_array.append(operation)
+	# OAI -> OR + NAND
+	elif (op[:3] == 'OAI'):
+		if (op not in ['OAI21xp5_ASAP7_75t_SL', 'OAI21xp33_ASAP7_75t_SL', 'OAI31xp33_ASAP7_75t_SRAM',\
+					   'OAI22xp5_ASAP7_75t_SL']):
+			print('NOT FOUND')
+			print(op)
+			print(line)
+			print(io_array)
+			exit()
+		# O -> OR
+		operation_1 = Operation('OR')
+		input_num_1 = int(op[3])
+		operation_1.input_node = io_array[:input_num_1]
+		node_1 = tmpNode().getNode()
+		operation_1.output_node = node_1
+		operation_array.append(operation_1)
+		# Check the number of OR gates
+		input_num_2 = int(op[4])
+		if (input_num_2 != 1):
+			# optional O -> OR
+			operation_2 = Operation('OR')
+			operation_2.input_node = io_array[input_num_1 : input_num_1 + input_num_2]
+			node_2 = tmpNode().getNode()
+			operation_2.output_node = node_2
+			operation_array.append(operation_2)
+		else:
+			node_2 = io_array[input_num_1]
+		# AI -> NAND
+		operation_3 = Operation('NAND')
+		operation_3.input_node = [node_1, node_2]
+		operation_3.output_node = io_array[-1]
+		operation_array.append(operation_3)
+	# A2O1A1I -> AND + OR + NAND,  A2O1A1O1I -> AND + OR + AND + NOR
+	elif (op[:2] == 'A2'):
+		if (op not in ['A2O1A1Ixp33_ASAP7_75t_SL', 'A2O1A1O1Ixp25_ASAP7_75t_SL']):
+			print('NOT FOUND')
+			print(op)
+			print(line)
+			print(io_array)
+			exit()
+		# A2 -> AND
+		operation_1 = Operation('AND')
+		operation_1.input_node = io_array[:2]
+		node_1 = tmpNode().getNode()
+		operation_1.output_node = node_1
+		operation_array.append(operation_1)
+		if (op[2:4] == 'O1'):
+			# O1 -> OR
+			operation_2 = Operation('OR')
+			operation_2.input_node = [node_1, io_array[2]]
+			node_2 = tmpNode().getNode()
+			operation_2.output_node = node_2
+			operation_array.append(operation_2)
+			if (op[4:6] == 'A1'):
+				if (op[6] == 'I'):
+					# A1I -> NAND
+					operation_3 = Operation('NAND')
+					operation_3.input_node = [node_2, io_array[3]]
+					operation_3.output_node = io_array[-1]
+					operation_array.append(operation_3)
+				else:
+					# A1 -> AND
+					operation_3 = Operation('AND')
+					operation_3.input_node = [node_2, io_array[3]]
+					node_3 = tmpNode().getNode()
+					operation_3.output_node = node_3
+					operation_array.append(operation_3)
+					if (op[6:8] == 'O1'):
+						if (op[8] == 'I'):
+							# O1I -> NOR
+							operation_4 = Operation('NOR')
+							operation_4.input_node = [node_3, io_array[4]]
+							operation_4.output_node = io_array[-1]
+							operation_array.append(operation_4)
+						else:
+							raise('Exception')
+					else:
+						raise('Exception')
+			else:
+				raise('Exception')
+		else:
+			raise('Exception')
+	# O2A1O1I -> OR + AND + NOR
+	elif (op[:2] == 'O2'):
+		if (op not in ['O2A1O1Ixp5_ASAP7_75t_SL', 'O2A1O1Ixp33_ASAP7_75t_SL', 'O2A1O1Ixp33_ASAP7_75t_SRAM']):
+			print('NOT FOUND')
+			print(op)
+			print(line)
+			print(io_array)
+			exit()
+		# O2 -> OR
+		operation_1 = Operation('OR')
+		operation_1.input_node = io_array[:2]
+		node_1 = tmpNode().getNode()
+		operation_1.output_node = node_1
+		operation_array.append(operation_1)
+		if (op[2:4] == 'A1'):
+			# A1 -> AND
+			operation_2 = Operation('AND')
+			operation_2.input_node = [node_1, io_array[2]]
+			node_2 = tmpNode().getNode()
+			operation_2.output_node = node_2
+			operation_array.append(operation_2)
+			if (op[4:6] == 'O1'):
+				if (op[6] == 'I'):
+					# O1I -> NOR
+					operation_3 = Operation('NOR')
+					operation_3.input_node = [node_2, io_array[3]]
+					operation_3.output_node = io_array[-1]
+					operation_array.append(operation_3)
+				else:
+					raise('Exception')
+			else:
+				raise('Exception')
+		else:
+			raise('Exception')
+	# -----others-----
+	elif (op[:5] == 'TIEHI'):
+		if (op not in ['TIEHIx1_ASAP7_75t_SL']):
+			print('NOT FOUND')
+			print(op)
+			print(line)
+			print(io_array)
+			exit()
+		operation = Operation('TIEHI')
+		operation.input_node = []
+		operation.output_node = io_array[-1]
+		operation_array.append(operation)
+	elif (op[:5] == 'TIELO'):
+		if (op not in ['TIELOx1_ASAP7_75t_SL']):
+			print('NOT FOUND')
+			print(op)
+			print(line)
+			print(io_array)
+			exit()
+		operation = Operation('TIELO')
+		operation.input_node = []
+		operation.output_node = io_array[-1]
+		operation_array.append(operation)
+	# -----protential ob-----
+	# DFF -> DFF
+	elif (op[:3] == 'DFF'): # TODO: uncertain logic=====================================================================
+		if (op not in ['DFFHQNx1_ASAP7_75t_SL', 'DFFHQNx1_ASAP7_75t_SRAM', 'DFFHQNx2_ASAP7_75t_SL',\
+					   'DFFHQNx3_ASAP7_75t_SL', 'DFFHQNx2_ASAP7_75t_SRAM']):
+			print('NOT FOUND')
+			print(op)
+			print(line)
+			print(io_array)
 			exit()
 		operation = Operation('DFF')
-		operation.input_node.append(io_array[0])
+		operation.input_node = [io_array[0]]
 		operation.output_node = io_array[-1]
-	elif (op[:9] == 'ASYNC_DFF'): # TODO: uncertain logic
-		if (op not in ['ASYNC_DFFHx1_ASAP7_75t_SL']):
+		operation_array.append(operation)
+	# ASYNC_DFF -> ASYNC_DFF
+	elif (op[:9] == 'ASYNC_DFF'): # TODO: uncertain logic===============================================================
+		if (op not in ['ASYNC_DFFHx1_ASAP7_75t_SL', 'ASYNC_DFFHx1_ASAP7_75t_SRAM']):
+			print('NOT FOUND')
+			print(op)
 			print(line)
+			print(io_array)
 			exit()
 		operation = Operation('ASYNC_DFF')
-		operation.input_node.append(io_array[0])
+		operation.input_node = [io_array[0]]
 		operation.output_node = io_array[-1]
+		operation_array.append(operation)
+	elif (op == 'spram'): # TODO: uncertain logic=======================================================================
+		return
+	elif (op == 'tpram'): # TODO: uncertain logic=======================================================================
+		return
 	else:
 		print(op)
+		print(line)
+		print(io_array)
 		exit()
 
 
@@ -160,9 +367,9 @@ for line in file:
 		# ----------moduel, input, output, wire----------
 		if (key_word=='module' or key_word=='input' or key_word=='output' or key_word=='wire'):
 			parseNode(key_word, line_cache)
-		# ----------operations----------
+		# ----------operation----------
 		else:
-			# print(key_word)
+			operator_set.add(key_word)
 			parseOperation(key_word, line_cache)
 			# print(line_cache[:20])
 			# print('TODO')
@@ -308,6 +515,8 @@ print('%-2d DFF operators' % len(DFF_operator_array))
 print('%-2d ADFF operators' % len(ADFF_operator_array))
 print('%-2d TIE operators' % len(TIE_operator_array))
 print('%-2d unknown operators, which are:' % len(un_operator_array))
+
+print(AnOn_operator_array)
 
 for op in un_operator_array:
 	print('      ', op)
