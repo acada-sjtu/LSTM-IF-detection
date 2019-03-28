@@ -4,7 +4,7 @@ class Op:
 	"""
 	Here is the class that embodies the logic operators
 	"""
- 
+
 	def __init__(self, which, operands):
 		self.operands = operands
 		self.which = which

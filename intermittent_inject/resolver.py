@@ -39,13 +39,11 @@ class Resolver:
 			op.reset()
 
 	def solve(self, node, inValues, error = "", modifier = ""):
-
 		"""
 		This functions takes a node as a parameter and returns its value.
 		"""
-		
-		#print("visited " +node)
-		#Test the memory validity
+		# print("visited " +node)
+		# Test the memory validity
 		if self.remembering["inValues"] != inValues or self.remembering["error"] != error or self.remembering["modifier"] != modifier:
 			self.remembered = {}
 			self.remembering["inValues"] = inValues
@@ -61,17 +59,17 @@ class Resolver:
 			op.visited = True
 			valOperands = []
 			
-			#print("operands-len = ",len(op.operands))
-			#print(op.operands)
+			# print("operands-len = ",len(op.operands))
+			# print(op.operands)
 			
-			#input()
+			# input()
 			for operand in op.operands:
 				valOperands.append(self.solve(operand, inValues, error, modifier))
-			#print("calculated ", node, valOperands)
+			# print("calculated ", node, valOperands)
 			if self.board.isFlawed:
 				# print op.operands
 				op.value = op.calc(valOperands, error, modifier)
 			else:
 				op.value = op.calc(valOperands)
-			#print("result of ", node, "is", op.value)
+			# print("result of ", node, "is", op.value)
 			return op.value
