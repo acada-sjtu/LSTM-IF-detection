@@ -1,0 +1,34 @@
+// Verilog
+// t2
+// Ninputs 11
+// Noutputs 4
+// NtotalGates 18
+// NAND2 5
+
+module t1 (N1,N2,N3,N4,N5,N6,N7,N8,N9,N10,N11,N12,N13,N14,N15);
+
+input N1,N2,N3,N4,N5,N6,N7,N8,N9,N10,N11;
+
+output N12,N13,N14,N15;
+
+N16 = NAND(N1, N2)
+N19 = NOR(N3, N16)
+N21 = NAND(N4, N5)
+N23 = NOR(N6, N7)
+N26 = NAND(N7, N9)
+N25 = NOR(N3, N8)
+N18 = NAND(N19, N17)
+N17 = NOR(N16, N21)
+N22 = NOR(N21, N25)
+N20 = NAND(N19, N22)
+N12 = NOR(N18, N20)
+N27 = NOR(N10, N11)
+N24 = NAND(N23, N27)
+N13 = NOR(N22, N24)
+N28 = NAND(N25, N26)
+N29 = NAND(N22, N28)
+N14 = NAND(N29, N11)
+N15 = NAND(N26, N27)
+
+
+endmodule
