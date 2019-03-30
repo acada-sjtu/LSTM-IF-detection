@@ -2,17 +2,19 @@
 import sys
 import random
 CYCLE = 50
-SAMPLE = 10
 #INPUT_NUM = 32
 
 filename1 = sys.argv[1]
 filename2 = sys.argv[2]
 
+benchmark = filename1.split('_')[1]
+pos = filename1.split('_')[2]
+
 count = 0
 flag = 2
 with open(filename1) as file_no, \
         open(filename2) as file_single,\
-        open('dataset_b%d_f'%SAMPLE,'w+') as file_write:
+        open('dataset_%s_%s' % (benchmark, pos),'w+') as file_write:
     while 1:
         if not flag:
             break
@@ -26,7 +28,7 @@ with open(filename1) as file_no, \
                 flag -= 1
                 file_read = file_no if file_read is file_single else file_single
                 break
-            if count%CYCLE == 0:
+            if count % CYCLE == 0:
                 if file_read == file_no:
                     file_write.writelines('0\n')
                 else:
@@ -34,9 +36,6 @@ with open(filename1) as file_no, \
                 count += 1
                 continue
 
-            file_write.writelines(item+' ' for item in line.split()[:]) #slice input here
+            file_write.writelines(item + ' ' for item in line.split()[:]) #slice input here
             file_write.writelines('\n')
             count += 1
-
-
-
