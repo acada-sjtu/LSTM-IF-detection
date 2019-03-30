@@ -1,3 +1,4 @@
+import os
 import sys
 import numpy as np
 import h5py
@@ -42,11 +43,14 @@ bi_hidden_states_model.load_weights("weights/bilstm_weights_%s.hdf5" % benchmark
 
 
 # --------------------evaluate--------------------
+print 'evaluating...'
 seq_num = xrange(len(seqTest))
 A = 0
 B = 0
 C = 0
 D = 0
+if not os.path.exists('h_states'):
+	os.mkdir('h_states')
 if faulty_label:
 	file_J = h5py.File('h_states/bi_hidden_states_J_%s_%s.hdf5' % (benchmark, pos), 'w')
 else:

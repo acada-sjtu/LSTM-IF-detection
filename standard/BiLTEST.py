@@ -25,6 +25,7 @@ bilstm_model.load_weights("weights/bilstm_weights_%s.hdf5" % benchmark)
 
 
 # --------------------evaluate--------------------
+print 'evaluating...'
 seq_num = xrange(len(seqTest))
 A = 0
 B = 0

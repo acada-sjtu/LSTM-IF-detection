@@ -1,3 +1,4 @@
+import os
 import sys
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -55,6 +56,8 @@ hidden_states_model = Model(inputs=[input_1], outputs=[h_states_1])
 
 
 # --------------------save model--------------------
+if not os.path.exists('models'):
+	os.mkdir('models')
 lstm_string = lstm_model.to_json()
 open('models/lstm_model_%s.json'%benchmark, 'w').write(lstm_string)
 hidden_states_string = hidden_states_model.to_json()
@@ -62,6 +65,8 @@ open('models/hidden_states_model_%s.json'%benchmark, 'w').write(hidden_states_st
 
 
 # --------------------training--------------------
+if not os.path.exists('weights'):
+	os.mkdir('weights')
 checkpointer = ModelCheckpoint(filepath='weights/lstm_weights_%s.hdf5'%benchmark, verbose=1, save_best_only=True)
 lstm_model.fit({'input_1': seq}, {'output_1': targets}, epochs=n_epoch, shuffle=True, batch_size=32, validation_data=(seqTest, targetsTest), callbacks=[checkpointer])
 print lstm_model.evaluate(seqTest, targetsTest, batch_size=32)

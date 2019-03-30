@@ -25,7 +25,7 @@ if (len(sys.argv)==5 and sys.argv[4]=='1c'):
 
     
 # --------------------read data--------------------
-seqTest, targetsTest = file_read(n_steps, file_path)
+seqTest, targetsTest = file_read(n_step, file_path)
 
 
 # --------------------load model--------------------
@@ -34,6 +34,7 @@ lstm_model.load_weights("lstm_weights_%s.hdf5" % benchmark)
 
 
 # --------------------evaluate--------------------
+print 'evaluating...'
 seq_num = xrange(len(seqTest))
 A = 0
 B = 0
