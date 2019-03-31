@@ -18,6 +18,11 @@ benchmark = file_path.split('_')[0]
 seqTest, targetsTest = file_read(n_step, file_path)
 
 
+# --------------------FF selection--------------------
+FF_index = np.load("FF_index.npy")
+seqTest = seqTest[:, :, FF_index]
+
+
 # --------------------load model--------------------
 lstm_model = model_from_json(open('models/lstm_model_%s.json' % benchmark).read())
 lstm_model.load_weights("weights/lstm_weights_%s.hdf5" % benchmark)

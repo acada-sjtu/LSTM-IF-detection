@@ -6,6 +6,7 @@ from keras.models import Sequential, Model, model_from_json
 from keras.layers import Input, LSTM, Dropout, Dense
 from keras.callbacks import ModelCheckpoint
 from fileRead import file_read
+from FFSelect import FFSelect_sample
 
 # np.random.seed(0)
 
@@ -35,6 +36,20 @@ else:
 	print seq.shape, targets.shape
 	print seqTest.shape, targetsTest.shape
 	n_out = seq.shape[2]
+
+
+# --------------------FF selection--------------------
+n_FF = 500
+if n_FF != 0:
+	FF_index = FFSelect_sample(seq, targets, n_FF)
+	seq = seq[:, :, FF_index]
+	seqTest = seqTest[:, :, FF_index]
+	n_out = n_FF
+else:
+	FF_index = np.arange(n_out)
+np.save('FF_index.npy', FF_index)
+print seq.shape, targets.shape
+print seqTest.shape, targetsTest.shape
 
 
 # --------------------construct model--------------------

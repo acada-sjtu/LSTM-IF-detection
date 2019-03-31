@@ -38,6 +38,20 @@ else:
 	n_out = seq.shape[2]
 
 
+# --------------------FF selection--------------------
+n_FF = 500
+if n_FF != 0:
+	FF_index = FFSelect_sample(seq, targets, n_FF)
+	seq = seq[:, :, FF_index]
+	seqTest = seqTest[:, :, FF_index]
+	n_out = n_FF
+else:
+	FF_index = np.arange(n_out)
+np.save('FF_index.npy', FF_index)
+print seq.shape, targets.shape
+print seqTest.shape, targetsTest.shape
+
+
 # --------------------construct model--------------------
 # bilstm_model = Sequential()
 input_1 = Input(shape=(n_step-1, n_out), name='input_1')
