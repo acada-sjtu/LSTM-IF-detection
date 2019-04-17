@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from keras.models import Sequential, Model, model_from_json
 from keras.layers import Input, LSTM, Dropout, Dense
+from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
 from fileRead import file_read
 
@@ -11,9 +12,11 @@ from fileRead import file_read
 
 n_step = 50
 n_epoch = 100
-n_hidden = 128
+n_hidden = 1024
 
 dropout_flag = 0
+learning_rate = 0.01
+decay_rate = learning_rate / n_epoch
 
 
 # --------------------read data--------------------
@@ -48,10 +51,10 @@ else:
 	dense_1 = Dense(1, activation='sigmoid', name='output_1')(state_h_1)
 # LSTM
 lstm_model = Model(inputs=[input_1], outputs=[dense_1])
-lstm_model.compile(loss='binary_crossentropy',
-			  optimizer='adam',
-			  metrics=['accuracy'])
-# hidden states
+AdamOptimizer = Adam(lr=learning_rate, decay=decay_rate)
+lstm_model.compile(optimizer=AdamOptimizer,
+				   loss='binary_crossentropy',
+				   metrics=['accuracy'])# hidden states
 hidden_states_model = Model(inputs=[input_1], outputs=[h_states_1])
 
 

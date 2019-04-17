@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from keras.models import Sequential, Model, model_from_json
 from keras.layers import Input, LSTM, Dropout, Dense
 from keras.layers import Bidirectional, concatenate
+from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
 from fileRead import file_read
 
@@ -15,6 +16,8 @@ n_epoch = 100
 n_hidden = 128
 
 dropout_flag = 0
+learning_rate = 0.01
+decay_rate = learning_rate / n_epoch
 
 
 # --------------------read data--------------------
@@ -50,8 +53,9 @@ else:
 	dense_1 = Dense(1, activation='sigmoid', name='output_1')(state_h)
 # BiLSTM
 bilstm_model = Model(inputs=[input_1], outputs=[dense_1])
-bilstm_model.compile(loss='binary_crossentropy',
-					 optimizer='adam',
+AdamOptimizer = Adam(lr=learning_rate, decay=decay_rate)
+bilstm_model.compile(optimizer=AdamOptimizer,
+					 loss='binary_crossentropy',
 					 metrics=['accuracy'])
 # hidden states
 bi_hidden_states_model = Model(inputs=[input_1], outputs=[h_states_1])

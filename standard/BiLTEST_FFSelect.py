@@ -20,6 +20,11 @@ benchmark = file_path.split('_')[0]
 seqTest, targetsTest = file_read(n_step, file_path)
 
 
+# --------------------FF selection--------------------
+FF_index = np.load("FF_index.npy")
+seqTest = seqTest[:, :, FF_index]
+
+
 # --------------------load model--------------------
 bilstm_model = model_from_json(open('models/bilstm_model_%s.json' % benchmark).read())
 bilstm_model.load_weights("weights/bilstm_weights_%s.hdf5" % benchmark)

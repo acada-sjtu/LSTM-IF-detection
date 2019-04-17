@@ -13,7 +13,8 @@ from FFSelect import FFSelect_sample
 
 n_step = 50
 n_epoch = 100
-n_hidden = 256
+n_hidden_1 = 256
+n_hidden_2 = 64
 
 dropout_flag = 0
 learning_rate = 0.01
@@ -42,7 +43,7 @@ else:
 
 
 # --------------------FF selection--------------------
-n_FF = 500
+n_FF = 1000
 if n_FF != 0:
 	FF_index = FFSelect_sample(seq, targets, n_FF)
 	seq = seq[:, :, FF_index]
@@ -58,37 +59,40 @@ print seqTest.shape, targetsTest.shape
 # --------------------construct model--------------------
 # model = Sequential()
 input_1 = Input(shape=(n_step-1, n_out), name='input_1')
-h_states_1, state_h_1, state_c_1 = LSTM(n_hidden, activation='tanh', return_sequences=True, return_state=True)(input_1)
+h_states_1, state_h_1, state_c_1 = LSTM(n_hidden_1, activation='tanh', return_sequences=True, return_state=True)(input_1)
+h_states_2, state_h_2, state_c_2 = LSTM(n_hidden_2, activation='tanh', return_sequences=True, return_state=True)(h_states_1)
 if dropout_flag:
-	dropout_1 = Dropout(0.2)(state_h_1)
+	dropout_1 = Dropout(0.2)(state_h_2)
 	dense_1 = Dense(1, activation='sigmoid', name='output_1')(dropout_1)
 else:
-	dense_1 = Dense(1, activation='sigmoid', name='output_1')(state_h_1)
+	dense_1 = Dense(1, activation='sigmoid', name='output_1')(state_h_2)
 # LSTM
-lstm_model = Model(inputs=[input_1], outputs=[dense_1])
+lstm_2l_model = Model(inputs=[input_1], outputs=[dense_1])
 AdamOptimizer = Adam(lr=learning_rate, decay=decay_rate)
 lstm_model.compile(optimizer=AdamOptimizer,
 				   loss='binary_crossentropy',
-				   metrics=['accuracy'])
-# hidden states
-hidden_states_model = Model(inputs=[input_1], outputs=[h_states_1])
+				   metrics=['accuracy'])# hidden states
+h_states_model_1 = Model(inputs=[input_1], outputs=[h_states_1])
+h_states_model_2 = Model(inputs=[input_1], outputs=[h_states_2])
 
 
 # --------------------save model--------------------
 if not os.path.exists('models'):
 	os.mkdir('models')
-lstm_string = lstm_model.to_json()
-open('models/lstm_model_%s.json'%benchmark, 'w').write(lstm_string)
-hidden_states_string = hidden_states_model.to_json()
-open('models/hidden_states_model_%s.json'%benchmark, 'w').write(hidden_states_string)
+lstm_2l_string = lstm_2l_model.to_json()
+open('models/lstm_2l_model_%s.json'%benchmark, 'w').write(lstm_2l_string)
+h_states_string_1 = h_states_model_1.to_json()
+open('models/h_states_1_model_%s.json'%benchmark, 'w').write(h_states_string_1)
+h_states_string_2 = h_states_model_2.to_json()
+open('models/h_states_2_model_%s.json'%benchmark, 'w').write(h_states_string_2)
 
 
 # --------------------training--------------------
 if not os.path.exists('weights'):
 	os.mkdir('weights')
-checkpointer = ModelCheckpoint(filepath='weights/lstm_weights_%s.hdf5'%benchmark, verbose=1, save_best_only=True)
-lstm_model.fit({'input_1': seq}, {'output_1': targets}, epochs=n_epoch, shuffle=True, batch_size=32, validation_data=(seqTest, targetsTest), callbacks=[checkpointer])
-print lstm_model.evaluate(seqTest, targetsTest, batch_size=32)
+checkpointer = ModelCheckpoint(filepath='weights/lstm_2l_weights_%s.hdf5'%benchmark, verbose=1, save_best_only=True)
+lstm_2l_model.fit({'input_1': seq}, {'output_1': targets}, epochs=n_epoch, shuffle=True, batch_size=32, validation_data=(seqTest, targetsTest), callbacks=[checkpointer])
+print lstm_2l_model.evaluate(seqTest, targetsTest, batch_size=32)
 
 
 # --------------------evaluate--------------------
@@ -100,7 +104,7 @@ C = 0
 D = 0
 print seqTest.shape
 for test_num in seq_num:
-	prob = lstm_model.predict(np.asarray([seqTest[test_num]]))
+	prob = lstm_2l_model.predict(np.asarray([seqTest[test_num]]))
 	guess = 1 if prob>=0.5 else 0
 	if guess == 1:
 		if targetsTest[test_num] == 1:

@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from keras.models import Sequential, Model, model_from_json
 from keras.layers import Input, LSTM, Dropout, Dense
+from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint
 from fileRead import file_read
 
